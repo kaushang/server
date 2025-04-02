@@ -73,25 +73,36 @@ app.post("/api/create", async (req, res) => {
   }
 });
 
-app.post("/api/login", isLoggedIn, async (req, res) => {
-  const user = await userModel.findOne({ email: req.body.email });
-  if (!user) {
-    return res.status(404).json({ message: "User does not exist" });
-  } else {
-    bcrypt.compare(req.body.password, user.password, (err, result) => {
-      if (result) {
-        let token = jwt.sign({ email: user.email }, "xyz");
-        res.cookie("token", token);
-        res.cookie("token", token, {
-          httpOnly: true, // Prevent access from JavaScript
-          sameSite: "None", // Required if frontend and backend are on different origins
-        });
+app.post("/api/login", async (req, res) => {
+  try {
+    console.log("Req came")
+    const { email, password } = req.body;
+    const user = await userModel.findOne({ email });
 
-        res.status(200).json({ message: "Seccuessfully logged in" });
-      } else {
-        return res.status(400).json({ message: "Wrong email or password" });
-      }
+    if (!user) {
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Wrong email or password" });
+    }
+
+    const token = jwt.sign({ email: user.email, id: user._id }, "xyz", {
+      expiresIn: "1h",
     });
+
+    res.cookie("token", token, {
+      httpOnly: true, // ✅ Secure cookie to prevent XSS attacks
+      sameSite: "None", // ✅ Required for cross-origin requests
+      secure: true, // ✅ Required when using HTTPS
+    });
+
+    return res.status(200).json({ message: "Successfully logged in" });
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
