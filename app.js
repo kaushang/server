@@ -22,6 +22,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "/client/dist")));
 app.use(cookieParser());
 
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
+});
+
 app.get("/api/home", isLoggedIn, async (req, res) => {
   const user = await userModel.findOne({ email: req.user.email });
   const posts = await postModel.find().populate("user", "username"); // Fetch usernames
