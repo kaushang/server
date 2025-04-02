@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, "/client/dist")));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://memoir-rho.vercel.app", // Your Vercel frontend URL
+    origin: "*", // Your Vercel frontend URL
     methods: "GET,POST,PUT,DELETE",
     credentials: true, // Allow cookies and authentication headers
   })
