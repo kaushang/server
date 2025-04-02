@@ -10,30 +10,40 @@ const postModel = require("./models/postModel");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const cors = require("cors");
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "/client/dist")));
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "https://memoir-rho.vercel.app", // Your Vercel frontend URL
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true, // Allow cookies and authentication headers
+  })
+);
+
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
   })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-// app.set("view engine", "ejs");
-app.use(express.static(path.join(__dirname, "/client/dist")));
-app.use(cookieParser());
-app.use(cors({
-  origin: "https://memoir-rho.vercel.app", // Your Vercel frontend URL
-  methods: "GET,POST,PUT,DELETE",
-  credentials: true // Allow cookies and authentication headers
-}));
-
 app.get("/", (req, res) => {
   res.send("Backend is running!");
 });
 
 app.get("/api/home", isLoggedIn, async (req, res) => {
+  if (!req.user || !req.user.email) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const user = await userModel.findOne({ email: req.user.email });
-  const posts = await postModel.find().populate("user", "username"); // Fetch usernames
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  const posts = await postModel.find().populate("user", "username");
   res.status(200).json({ user, posts });
 });
 app.post("/api/create", async (req, res) => {
@@ -208,12 +218,14 @@ app.post("/api/delete/comment/:postId", isLoggedIn, async (req, res) => {
 
 function isLoggedIn(req, res, next) {
   if (!req.cookies || !req.cookies.token) {
-    req.user = { status: "Not logged in" };
-    next();
-  } else {
+    return res.status(401).json({ error: "Unauthorized: No token provided" });
+  }
+  try {
     let data = jwt.verify(req.cookies.token, "xyz");
     req.user = data;
     next();
+  } catch (error) {
+    return res.status(401).json({ error: "Unauthorized: Invalid token" });
   }
 }
 app.get("/api/auth", isLoggedIn, (req, res) => {
