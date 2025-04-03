@@ -95,9 +95,7 @@ app.post("/api/login", async (req, res) => {
       return res.status(400).json({ message: "Wrong email or password" });
     }
 
-    const token = jwt.sign({ email: user.email, id: user._id }, "xyz", {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign({ email: user.email }, "xyz");
 
     res.cookie("token", token, {
       httpOnly: true, // ✅ Secure cookie to prevent XSS attacks
