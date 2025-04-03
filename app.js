@@ -8,20 +8,27 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const postModel = require("./models/postModel");
 const mongoose = require("mongoose");
-require("dotenv").config();
 const cors = require("cors");
+require("dotenv").config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "/client/dist")));
 app.use(cookieParser());
+// app.use(
+//   cors({
+//     origin: process.env.CLIENT_URL, // Your Vercel frontend URL
+//     methods: "GET,POST,PUT,DELETE",
+//     credentials: true, // Allow cookies and authentication headers
+//   })
+// );
 app.use(
   cors({
-    origin: process.env.CLIENT_URL, // Your Vercel frontend URL
-    methods: "GET,POST,PUT,DELETE",
-    credentials: true, // Allow cookies and authentication headers
+    origin: "https://memoir-kaushang-suryas-projects.vercel.app",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
   })
 );
-
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
