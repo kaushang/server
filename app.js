@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const path = require("path");
-const port = 3000;
+const port = process.env.PORT || 3000;
 const userModel = require("./models/userModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -12,7 +12,6 @@ require("dotenv").config();
 const cors = require("cors");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "/client/dist")));
 app.use(cookieParser());
 app.use(
@@ -26,6 +25,7 @@ app.use(
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
+    useUnifiedTopology: true,
   })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
@@ -75,7 +75,6 @@ app.post("/api/create", async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
   try {
-    console.log("Req came")
     const { email, password } = req.body;
     const user = await userModel.findOne({ email });
 
@@ -143,7 +142,7 @@ app.get("/api/delete/:id", isLoggedIn, async (req, res) => {
     await postModel.findByIdAndDelete(req.params.id);
     await userModel.updateOne(
       { _id: post.user },
-      { $pull: { posts: req.params.id } } // Remove the post ID from the array
+      { $pull: { posts: req.params.id } }
     );
     res.status(200).json({ posts: user.posts });
   } catch (error) {
@@ -236,7 +235,7 @@ function isLoggedIn(req, res, next) {
     req.user = data;
     next();
   } catch (error) {
-    return res.status(401).json({ error: "Unauthorized: Invalid token" });
+    return res.status(402).json({ error: "Unauthorized: Invalid token" });
   }
 }
 app.get("/api/auth", isLoggedIn, (req, res) => {
@@ -247,6 +246,6 @@ app.get("/api/auth", isLoggedIn, (req, res) => {
   }
 });
 
-app.listen(port, "0.0.0.0", () => {
+app.listen(port, () => {
   console.log(`Server running at port: http://localhost:${port}/`);
 });
