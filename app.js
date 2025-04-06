@@ -73,7 +73,14 @@ app.post("/api/create", async (req, res) => {
           password: hash,
         });
         let token = jwt.sign({ email }, "xyz");
-        res.cookie("token", token);
+        // res.cookie("token", token);
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'None',
+          maxAge: 24 * 60 * 60 * 1000
+        });
+        console.log("cookie set");
         return res.status(200).json({ message: "User created" });
       });
     });
