@@ -21,14 +21,6 @@ app.use(
     credentials: true, // Allow cookies and authentication headers
   })
 );
-// app.use(
-//   cors({
-//     origin: "https://memoir-kaushang-suryas-projects.vercel.app",
-//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//     credentials: true,
-//     allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
-//   })
-// );
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
@@ -73,14 +65,12 @@ app.post("/api/create", async (req, res) => {
           password: hash,
         });
         let token = jwt.sign({ email }, "xyz");
-        // res.cookie("token", token);
         res.cookie('token', token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'None',
           maxAge: 24 * 60 * 60 * 1000
         });
-        console.log("cookie set");
         return res.status(200).json({ message: "User created" });
       });
     });
@@ -95,13 +85,10 @@ app.post("/api/login", async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User does not exist" });
     }
-
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Wrong email or password" });
     }
-
     const token = jwt.sign({ email: user.email }, "xyz");
 
     res.cookie("token", token, {
@@ -162,7 +149,7 @@ app.get("/api/delete/:id", isLoggedIn, async (req, res) => {
   }
 });
 
-app.post("/api/like/:postId", async (req, res) => {
+app.post("/api/like/:postId", isLoggedIn, async (req, res) => {
   try {
     const { postId } = req.params;
     const { userId } = req.body;
